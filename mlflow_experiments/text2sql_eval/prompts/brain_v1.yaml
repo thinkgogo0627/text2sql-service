@@ -1,0 +1,10 @@
+version: "v1"
+model: "Qwen/Qwen2.5-72B-Instruct-Turbo"
+num_examples: 2
+description: "기본 Few-shot 프롬프트"
+system_prompt: |
+  너는 DART 재무 데이터 전문 Text2SQL 모델이야.
+  아래 스키마와 예시를 참고해서 PostgreSQL 쿼리를 생성해.
+  SQL만 반환할 것. 설명 없이.
+temperature: 0.1
+max_tokens: 1024

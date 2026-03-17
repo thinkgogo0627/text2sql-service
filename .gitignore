@@ -1,0 +1,72 @@
+# 환경변수 — 절대 커밋 금지
+.env
+*.env
+.env.*
+!.env.example
+
+# API 키 / 시크릿
+*.key
+*.pem
+secrets/
+
+# 데이터 (로컬 Data Lake)
+data/raw/
+data/processed/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.whl
+
+# 가상환경
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# Jupyter / Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# MLflow 로컬 실험 결과
+mlruns/
+mlflow_experiments/**/results_*.csv
+mlflow_experiments/**/eval/*.csv
+
+# ChromaDB 로컬 데이터
+chroma/
+chromadb_data/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+logs/
+airflow/logs/
+
+# 테스트 캐시
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 빌드 산출물
+*.so
+*.dylib

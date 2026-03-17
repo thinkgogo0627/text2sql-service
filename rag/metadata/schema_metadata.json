@@ -1,0 +1,28 @@
+[
+  {
+    "table_name": "financial_fact",
+    "ddl": "CREATE TABLE financial_fact (id BIGSERIAL PRIMARY KEY, corp_code VARCHAR(8) NOT NULL REFERENCES company_dim(corp_code), rcept_no VARCHAR(14), reprt_code VARCHAR(5), bsns_year SMALLINT NOT NULL, fs_div CHAR(3) NOT NULL, sj_div VARCHAR(3) NOT NULL, sj_nm VARCHAR(50), account_id VARCHAR(100), account_nm VARCHAR(200) NOT NULL, account_detail TEXT, amount BIGINT, currency CHAR(3) DEFAULT 'KRW', ord SMALLINT, created_at TIMESTAMP DEFAULT NOW(), UNIQUE (corp_code, bsns_year, fs_div, sj_div, account_id))",
+    "description": "OpenDART에서 수집한 재무수치. account_nm에 영업이익, 당기순이익, 매출액 등 계정명 포함. amount 단위는 KRW(원). bsns_year는 실제 회계연도.",
+    "join_hint": "company_dim.corp_code = financial_fact.corp_code",
+    "key_columns": ["corp_code", "bsns_year", "fs_div", "sj_div", "account_nm", "amount"],
+    "example_values": {
+      "sj_div": ["BS", "IS", "CF", "CIS"],
+      "fs_div": ["CFS(연결)", "OFS(별도)"],
+      "account_nm_examples": ["자산총계", "영업이익", "당기순이익", "매출액", "자기자본"]
+    }
+  },
+  {
+    "table_name": "company_dim",
+    "ddl": "CREATE TABLE company_dim (corp_code VARCHAR(8) PRIMARY KEY, corp_name VARCHAR(100) NOT NULL, corp_name_eng VARCHAR(200), stock_name VARCHAR(100), stock_code VARCHAR(6), ceo_nm VARCHAR(200), corp_cls CHAR(1), jurir_no VARCHAR(13), bizr_no VARCHAR(10), adres TEXT, hm_url VARCHAR(200), phn_no VARCHAR(20), induty_code VARCHAR(6), est_dt DATE, acc_mt CHAR(2), updated_at TIMESTAMP DEFAULT NOW())",
+    "description": "기업 메타정보. corp_code는 DART 고유 기업코드. stock_code는 상장사만 존재.",
+    "join_hint": "company_dim.corp_code = financial_fact.corp_code",
+    "key_columns": ["corp_code", "corp_name", "stock_code", "induty_code"]
+  },
+  {
+    "table_name": "event_logs_fact",
+    "ddl": "CREATE TABLE event_logs_fact (id BIGSERIAL PRIMARY KEY, corp_code VARCHAR(8) NOT NULL REFERENCES company_dim(corp_code), rcept_no VARCHAR(14) UNIQUE, report_nm VARCHAR(500), flr_nm VARCHAR(200), rcept_dt DATE, rm CHAR(1), news_content TEXT, sentiment_score FLOAT, summary TEXT, created_at TIMESTAMP DEFAULT NOW())",
+    "description": "공시 및 뉴스 로그. news_content는 Playwright로 크롤링한 본문. sentiment_score는 -1(부정)~1(긍정). summary는 sLLM이 생성한 3줄 요약.",
+    "join_hint": "company_dim.corp_code = event_logs_fact.corp_code",
+    "key_columns": ["corp_code", "rcept_dt", "report_nm", "sentiment_score", "summary"]
+  }
+]

@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: text2sql_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  airflow:
+    image: apache/airflow:2.8.0
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow_db
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/plugins:/opt/airflow/plugins
+
+  mcp_server:
+    build: ./mcp_server
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+      - chromadb
+    env_file: ./infra/.env
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8002:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    ports:
+      - "5000:5000"
+    command: mlflow server --host 0.0.0.0 --port 5000
+    volumes:
+      - mlflow_data:/mlflow
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - mcp_server
+    env_file: ./infra/.env
+
+volumes:
+  postgres_data:
+  chromadb_data:
+  mlflow_data:

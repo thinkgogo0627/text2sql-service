@@ -1,0 +1,37 @@
+[
+  {
+    "id": "tc_001",
+    "user_query": "삼성전자 2023년 영업이익 알려줘",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "삼성전자", "2023"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim"
+  },
+  {
+    "id": "tc_002",
+    "user_query": "현대오토에버 최근 3년 영업이익률 추이",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "매출액", "GROUP BY"],
+    "expected_sql_pattern": "GROUP BY.*bsns_year.*ORDER BY"
+  },
+  {
+    "id": "tc_003",
+    "user_query": "LG전자 2022년 자기자본비율",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["자기자본", "자산총계"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm"
+  },
+  {
+    "id": "tc_004",
+    "user_query": "SK하이닉스 당기순이익이 가장 높은 연도",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["당기순이익", "MAX", "ORDER BY"],
+    "expected_sql_pattern": "ORDER BY.*amount.*DESC.*LIMIT 1"
+  },
+  {
+    "id": "tc_005",
+    "user_query": "2023년 상장기업 영업이익 상위 5개사",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "ORDER BY", "LIMIT"],
+    "expected_sql_pattern": "ORDER BY.*DESC.*LIMIT 5"
+  }
+]

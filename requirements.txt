@@ -1,0 +1,31 @@
+# 데이터 파이프라인
+apache-airflow==2.8.0
+playwright
+pandas
+sqlalchemy
+psycopg2-binary
+boto3
+
+# 모델 서빙 및 RAG
+openai
+sentence-transformers
+chromadb
+fastapi
+uvicorn
+mlflow
+peft
+transformers
+
+# 에이전트 및 관측성
+langchain
+langgraph
+langsmith
+
+# 프론트엔드
+streamlit
+plotly
+
+# 추가 의존성
+httpx
+pyyaml
+requests
