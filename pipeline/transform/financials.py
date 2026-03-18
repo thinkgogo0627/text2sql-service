@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 from datetime import datetime
+from typing import Optional
 
 
 def parse_year(nm_value: str, fallback: int) -> int:
@@ -83,14 +84,14 @@ def transform_and_load_financials(df_raw: pd.DataFrame) -> pd.DataFrame:
     return df_long
 
 
-def _safe_int(val) -> int | None:
+def _safe_int(val) -> Optional[int]:
     try:
         return int(str(val).replace(",", "").strip())
     except (ValueError, TypeError):
         return None
 
 
-def parse_date(val: str) -> datetime | None:
+def parse_date(val: str) -> Optional[datetime]:
     """'20231211' → datetime 변환."""
     if not val or not str(val).strip():
         return None

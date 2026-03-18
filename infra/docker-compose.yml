@@ -2,26 +2,88 @@ services:
   postgres:
     image: postgres:15
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: text2sql_db
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
+  airflow-init:
+    image: apache/airflow:2.8.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/text2sql_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'text2sql-airflow-secret-key'
+    command:
+      - bash
+      - -c
+      - >-
+        airflow db init &&
+        airflow users create
+        --username admin
+        --password admin
+        --firstname Admin
+        --lastname User
+        --role Admin
+        --email admin@example.com
+    volumes:
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/plugins:/opt/airflow/plugins
+      - ../pipeline:/opt/airflow/pipeline
+      - ../data:/opt/airflow/data
 
   airflow:
     image: apache/airflow:2.8.0
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
+      airflow-init:
+        condition: service_completed_successfully
+    env_file: .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow_db
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/text2sql_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'text2sql-airflow-secret-key'
+      DATA_LAKE_PATH: /opt/airflow/data/raw
+      POSTGRES_HOST: postgres
+    command: webserver
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/plugins:/opt/airflow/plugins
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/plugins:/opt/airflow/plugins
+      - ../pipeline:/opt/airflow/pipeline
+      - ../data:/opt/airflow/data
+
+  airflow-scheduler:
+    image: apache/airflow:2.8.0
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    env_file: .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/text2sql_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'text2sql-airflow-secret-key'
+      DATA_LAKE_PATH: /opt/airflow/data/raw
+      POSTGRES_HOST: postgres
+    command: scheduler
+    volumes:
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/plugins:/opt/airflow/plugins
+      - ../pipeline:/opt/airflow/pipeline
+      - ../data:/opt/airflow/data
 
   mcp_server:
     build: ./mcp_server

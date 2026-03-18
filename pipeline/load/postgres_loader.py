@@ -74,10 +74,9 @@ def get_engine():
 
 def create_tables():
     engine = get_engine()
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         for ddl in DDL_STATEMENTS:
             conn.execute(text(ddl))
-        conn.commit()
     print("Tables created successfully.")
 
 
@@ -102,10 +101,9 @@ def upsert_company(df: pd.DataFrame):
             ceo_nm        = EXCLUDED.ceo_nm,
             updated_at    = NOW()
     """)
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         for _, row in df.iterrows():
             conn.execute(upsert_sql, row.to_dict())
-        conn.commit()
     print(f"Upserted {len(df)} company records.")
 
 
@@ -128,13 +126,12 @@ def upsert_financials(df: pd.DataFrame):
             created_at = NOW()
     """)
     records = df.where(pd.notnull(df), None).to_dict(orient="records")
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         for record in records:
             try:
                 conn.execute(upsert_sql, record)
             except SQLAlchemyError as e:
                 print(f"Row upsert failed: {e} | record={record}")
-        conn.commit()
     print(f"Upserted {len(records)} financial records.")
 
 
@@ -155,10 +152,9 @@ def upsert_event_log(df: pd.DataFrame):
             summary         = EXCLUDED.summary
     """)
     records = df.where(pd.notnull(df), None).to_dict(orient="records")
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         for record in records:
             conn.execute(upsert_sql, record)
-        conn.commit()
     print(f"Upserted {len(records)} event log records.")
 
 

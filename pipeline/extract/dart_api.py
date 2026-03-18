@@ -31,7 +31,7 @@ def extract_dart_api(corp_code: str, year: int, reprt_code: str = "11011") -> pd
         "corp_code": corp_code,
         "bsns_year": str(year),
         "reprt_code": reprt_code,
-        "fs_div": "OFS",
+        "fs_div": "CFS",
     }
 
     max_retries = 3
@@ -47,7 +47,12 @@ def extract_dart_api(corp_code: str, year: int, reprt_code: str = "11011") -> pd
 
             records = data.get("list", [])
             df = pd.DataFrame(records)
-            _save_raw(df, corp_code, year, reprt_code, data)
+            if not df.empty:
+                df["fs_div"] = params["fs_div"]
+            try:
+                _save_raw(df, corp_code, year, reprt_code, data)
+            except Exception as save_err:
+                print(f"Raw 저장 실패 (무시됨): {save_err}")
             return df
 
         except requests.exceptions.RequestException as e:
