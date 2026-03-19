@@ -25,6 +25,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/text2sql_db
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: 'text2sql-airflow-secret-key'
+      POSTGRES_HOST: postgres
     command:
       - bash
       - -c
@@ -46,7 +47,7 @@ services:
   airflow:
     image: apache/airflow:2.8.0
     ports:
-      - "8080:8080"
+      - "8088:8080"
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -86,13 +87,13 @@ services:
       - ../data:/opt/airflow/data
 
   mcp_server:
-    build: ./mcp_server
+    build: ../mcp_server
     ports:
       - "8001:8001"
     depends_on:
       - postgres
       - chromadb
-    env_file: ./infra/.env
+    env_file: ./.env
 
   chromadb:
     image: chromadb/chroma:latest
@@ -110,12 +111,12 @@ services:
       - mlflow_data:/mlflow
 
   frontend:
-    build: ./frontend
+    build: ../frontend
     ports:
       - "8501:8501"
     depends_on:
       - mcp_server
-    env_file: ./infra/.env
+    env_file: ./.env
 
 volumes:
   postgres_data:

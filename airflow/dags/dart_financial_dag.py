@@ -163,6 +163,9 @@ def load_task(**context):
     from pipeline.load.postgres_loader import upsert_financials
 
     json_str = context["ti"].xcom_pull(key="transformed_data", task_ids="transform_and_load_financials")
+    if not json_str:
+        print("XCom에서 데이터를 가져오지 못했습니다 (None 또는 빈 값).")
+        return
     df = pd.read_json(json_str, orient="records")
 
     if df.empty:

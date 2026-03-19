@@ -126,13 +126,15 @@ def upsert_financials(df: pd.DataFrame):
             created_at = NOW()
     """)
     records = df.where(pd.notnull(df), None).to_dict(orient="records")
-    with engine.begin() as conn:
-        for record in records:
-            try:
+    success = 0
+    for record in records:
+        try:
+            with engine.begin() as conn:
                 conn.execute(upsert_sql, record)
-            except SQLAlchemyError as e:
-                print(f"Row upsert failed: {e} | record={record}")
-    print(f"Upserted {len(records)} financial records.")
+            success += 1
+        except SQLAlchemyError as e:
+            print(f"Row upsert failed: {e} | record={record}")
+    print(f"Upserted {success}/{len(records)} financial records.")
 
 
 def upsert_event_log(df: pd.DataFrame):
