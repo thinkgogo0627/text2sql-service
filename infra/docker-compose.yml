@@ -59,6 +59,11 @@ services:
       AIRFLOW__WEBSERVER__SECRET_KEY: 'text2sql-airflow-secret-key'
       DATA_LAKE_PATH: /opt/airflow/data/raw
       POSTGRES_HOST: postgres
+      DART_API_KEY: ${DART_API_KEY}
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: text2sql_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     command: webserver
     volumes:
       - ../airflow/dags:/opt/airflow/dags
@@ -79,6 +84,11 @@ services:
       AIRFLOW__WEBSERVER__SECRET_KEY: 'text2sql-airflow-secret-key'
       DATA_LAKE_PATH: /opt/airflow/data/raw
       POSTGRES_HOST: postgres
+      DART_API_KEY: ${DART_API_KEY}
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: text2sql_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     command: scheduler
     volumes:
       - ../airflow/dags:/opt/airflow/dags
@@ -87,7 +97,9 @@ services:
       - ../data:/opt/airflow/data
 
   mcp_server:
-    build: ../mcp_server
+    build:
+      context: ..
+      dockerfile: mcp_server/Dockerfile
     ports:
       - "8001:8001"
     depends_on:
@@ -111,7 +123,9 @@ services:
       - mlflow_data:/mlflow
 
   frontend:
-    build: ../frontend
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
     ports:
       - "8501:8501"
     depends_on:
