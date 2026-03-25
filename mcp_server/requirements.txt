@@ -1,0 +1,29 @@
+# MCP Server 전용 의존성 (airflow/frontend 제외)
+
+# API 서버
+fastapi
+uvicorn[standard]
+email-validator>=2.0
+
+# 크롤링
+playwright
+
+# DB
+sqlalchemy
+psycopg2-binary
+pandas
+
+# AI / Agent
+openai
+langchain
+langgraph
+langsmith
+
+# RAG
+sentence-transformers
+chromadb
+
+# 유틸
+httpx
+requests
+pyyaml

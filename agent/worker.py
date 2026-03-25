@@ -39,12 +39,15 @@ async def analyze_sentiment(text: str) -> dict:
 
     prompt = SENTIMENT_PROMPT.format(text=text[:2000])  # 최대 2000자
 
-    response = await client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=512,
-    )
+    try:
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=512,
+        )
+    except Exception as e:
+        raise RuntimeError(f"Together.ai API 호출 실패 (model={model}): {e}") from e
 
     raw = response.choices[0].message.content.strip()
 

@@ -29,3 +29,4 @@ plotly
 httpx
 pyyaml
 requests
+email-validator>=2.0

@@ -44,6 +44,12 @@ class ScrapeRequest(BaseModel):
     intent: str = ""
 
 
+class NaverNewsRequest(BaseModel):
+    stock_code: str
+    corp_code: str = ""
+    max_items: int = 10
+
+
 class SentimentRequest(BaseModel):
     text: str
     corp_code: str = ""
@@ -74,10 +80,19 @@ async def scrape(req: ScrapeRequest):
     return await run_playwright_scraper_tool(req.target_url, req.intent)
 
 
+@app.post("/tools/naver-news")
+async def naver_news(req: NaverNewsRequest):
+    from mcp_server.tools.playwright_tool import scrape_naver_finance_news
+    return await scrape_naver_finance_news(req.stock_code, req.corp_code, req.max_items)
+
+
 @app.post("/tools/sentiment")
 async def sentiment_analysis(req: SentimentRequest):
     from agent.worker import analyze_sentiment
-    result = await analyze_sentiment(req.text)
+    try:
+        result = await analyze_sentiment(req.text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     return result
 
 

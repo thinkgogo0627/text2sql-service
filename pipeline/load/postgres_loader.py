@@ -126,15 +126,23 @@ def upsert_financials(df: pd.DataFrame):
             created_at = NOW()
     """)
     records = df.where(pd.notnull(df), None).to_dict(orient="records")
+    # corp_code 8자리 보정 (pandas read_json 타입 추론으로 leading zero 소실 방어)
+    for r in records:
+        if r.get("corp_code") is not None:
+            r["corp_code"] = str(r["corp_code"]).zfill(8)
     success = 0
+    failed = 0
     for record in records:
         try:
             with engine.begin() as conn:
                 conn.execute(upsert_sql, record)
             success += 1
         except SQLAlchemyError as e:
-            print(f"Row upsert failed: {e} | record={record}")
-    print(f"Upserted {success}/{len(records)} financial records.")
+            print(f"Row upsert failed: {e} | corp_code={record.get('corp_code')} bsns_year={record.get('bsns_year')}")
+            failed += 1
+    print(f"Upserted {success}/{len(records)} financial records. Failed: {failed}")
+    if failed > 0:
+        raise RuntimeError(f"{failed}개 row 적재 실패. 로그를 확인하세요.")
 
 
 def upsert_event_log(df: pd.DataFrame):
@@ -154,10 +162,22 @@ def upsert_event_log(df: pd.DataFrame):
             summary         = EXCLUDED.summary
     """)
     records = df.where(pd.notnull(df), None).to_dict(orient="records")
-    with engine.begin() as conn:
-        for record in records:
-            conn.execute(upsert_sql, record)
-    print(f"Upserted {len(records)} event log records.")
+    for r in records:
+        if r.get("corp_code") is not None:
+            r["corp_code"] = str(r["corp_code"]).zfill(8)
+    success = 0
+    failed = 0
+    for record in records:
+        try:
+            with engine.begin() as conn:
+                conn.execute(upsert_sql, record)
+            success += 1
+        except SQLAlchemyError as e:
+            print(f"Event log upsert failed: {e} | corp_code={record.get('corp_code')} rcept_no={record.get('rcept_no')}")
+            failed += 1
+    print(f"Upserted {success}/{len(records)} event log records. Failed: {failed}")
+    if failed > 0:
+        raise RuntimeError(f"event_log {failed}개 row 적재 실패. 위 로그를 확인하세요.")
 
 
 if __name__ == "__main__":

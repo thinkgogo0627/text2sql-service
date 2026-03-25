@@ -38,7 +38,7 @@ def transform_and_load_financials(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     for _, row in df_raw.iterrows():
         base = {
-            "corp_code":      str(row.get("corp_code", "")).strip(),
+            "corp_code":      str(row.get("corp_code", "")).strip().zfill(8),
             "rcept_no":       str(row.get("rcept_no", "")).strip() or None,
             "reprt_code":     str(row.get("reprt_code", "")).strip() or None,
             "fs_div":         str(row.get("fs_div", "")).strip(),
@@ -92,10 +92,13 @@ def _safe_int(val) -> Optional[int]:
 
 
 def parse_date(val: str) -> Optional[datetime]:
-    """'20231211' → datetime 변환."""
+    """날짜 문자열 → datetime 변환. '20231211' 및 '2023.12.11' 포맷 지원."""
     if not val or not str(val).strip():
         return None
-    try:
-        return datetime.strptime(str(val).strip(), "%Y%m%d")
-    except ValueError:
-        return None
+    s = str(val).strip()
+    for fmt in ("%Y%m%d", "%Y.%m.%d", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
