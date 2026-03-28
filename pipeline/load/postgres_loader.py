@@ -34,7 +34,7 @@ DDL_STATEMENTS = [
         fs_div        CHAR(3)      NOT NULL,
         sj_div        VARCHAR(3)   NOT NULL,
         sj_nm         VARCHAR(50),
-        account_id    VARCHAR(100),
+        account_id    TEXT,
         account_nm    VARCHAR(200) NOT NULL,
         account_detail TEXT,
         amount        BIGINT,
