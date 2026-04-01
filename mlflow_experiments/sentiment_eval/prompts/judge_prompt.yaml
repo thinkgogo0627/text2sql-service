@@ -1,0 +1,16 @@
+version: "v1"
+model: "Qwen/Qwen2.5-72B-Instruct-Turbo"
+description: "감성분석 Judge 프롬프트 (정답 레이블 생성용, Brain 72B 사용)"
+prompt: |
+  아래 금융 뉴스 텍스트를 분석하여 감성 점수를 반환해.
+
+  규칙:
+  - sentiment_score: -1.0(매우 부정) ~ 1.0(매우 긍정) 사이의 실수
+  - 기업의 실적, 주가, 사업 전망 관점에서 판단
+  - JSON 형식으로만 반환. 설명 없이.
+
+  형식:
+  {"sentiment_score": 0.5}
+
+  [텍스트]
+  {text}

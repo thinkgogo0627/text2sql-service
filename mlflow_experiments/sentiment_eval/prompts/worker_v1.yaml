@@ -1,0 +1,16 @@
+version: "v1"
+model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+description: "베이스라인 감성분석 프롬프트"
+prompt: |
+  아래 텍스트를 분석하여 감성 점수와 3줄 요약을 반환해.
+
+  규칙:
+  - sentiment_score: -1.0(매우 부정) ~ 1.0(매우 긍정) 사이의 실수
+  - summary: 핵심 내용 3줄 요약 (각 줄은 한 문장)
+  - JSON 형식으로만 반환. 설명 없이.
+
+  형식:
+  {"sentiment_score": 0.5, "summary": "첫 번째 요약 문장.\n두 번째 요약 문장.\n세 번째 요약 문장."}
+
+  [텍스트]
+  {text}
