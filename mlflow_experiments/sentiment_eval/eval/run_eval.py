@@ -91,7 +91,7 @@ def fetch_samples(num_samples: int) -> list:
     query = text("""
         SELECT id, corp_code, report_nm, news_content, sentiment_score
         FROM event_logs_fact
-        WHERE news_content IS NOT NULL AND LENGTH(news_content) > 100
+        WHERE news_content IS NOT NULL AND LENGTH(news_content) > 10
         ORDER BY RANDOM()
         LIMIT :limit
     """)
