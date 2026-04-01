@@ -63,7 +63,7 @@ async def judge_sentiment(text_content: str, prompt_template: str) -> float:
     """Qwen 72B로 감성 점수를 생성한다 (정답 레이블 역할)."""
     client = _get_brain_client()
     model = os.getenv("MODEL_BRAIN", "Qwen/Qwen2.5-72B-Instruct-Turbo")
-    prompt = prompt_template.format(text=text_content[:3000])
+    prompt = prompt_template.replace("{text}", text_content[:3000])
 
     response = await client.chat.completions.create(
         model=model,
