@@ -24,7 +24,7 @@ def _get_client() -> AsyncOpenAI:
     )
 
 
-async def analyze_sentiment(text: str) -> dict:
+async def analyze_sentiment(text: str, prompt_template: str | None = None) -> dict:
     """
     Llama 8B를 사용하여 텍스트의 감성 분석 및 3줄 요약을 수행한다.
 
@@ -37,7 +37,8 @@ async def analyze_sentiment(text: str) -> dict:
     client = _get_client()
     model = os.getenv("MODEL_WORKER", "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo")
 
-    prompt = SENTIMENT_PROMPT.format(text=text[:2000])  # 최대 2000자
+    template = prompt_template if prompt_template is not None else SENTIMENT_PROMPT
+    prompt = template.replace("{text}", text[:2000])
 
     try:
         response = await client.chat.completions.create(

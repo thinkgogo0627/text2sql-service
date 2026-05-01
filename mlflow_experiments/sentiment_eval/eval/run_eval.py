@@ -106,7 +106,10 @@ async def run_eval(args: argparse.Namespace):
     load_env()
 
     judge_prompt_template = load_prompt_template(PROMPTS_DIR / "judge_prompt.yaml")
+    worker_prompt_file = PROMPTS_DIR / f"worker_{args.prompt_version}.yaml"
+    worker_prompt_template = load_prompt_template(worker_prompt_file)
 
+    print(f"Worker 프롬프트: {worker_prompt_file.name}")
     print(f"DB에서 최대 {args.num_samples}개 샘플 추출 중...")
     samples = fetch_samples(args.num_samples)
     print(f"추출 완료: {len(samples)}개\n")
@@ -134,7 +137,7 @@ async def run_eval(args: argparse.Namespace):
         # Worker score + latency
         try:
             t0 = time.perf_counter()
-            worker_result = await analyze_sentiment(text_content)
+            worker_result = await analyze_sentiment(text_content, worker_prompt_template)
             latency_ms = (time.perf_counter() - t0) * 1000
             worker_score = worker_result["sentiment_score"]
         except Exception as e:
@@ -211,7 +214,7 @@ async def run_eval(args: argparse.Namespace):
         mlflow.log_metric("direction_match_rate", direction_match_rate)
         mlflow.log_metric("pearson_r", pearson_r)
         mlflow.log_metric("avg_latency_ms", avg_latency)
-        mlflow.log_artifact(str(PROMPTS_DIR / "worker_v1.yaml"))
+        mlflow.log_artifact(str(worker_prompt_file))
         mlflow.log_artifact(str(results_path))
 
     print("MLflow 기록 완료.")
