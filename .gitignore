@@ -63,8 +63,7 @@ logs/
 airflow/logs/
 
 # 개발 로그 (로컬 전용)
-dev_log.md
-**/dev_log.md
+*dev_log*
 
 # 테스트 캐시
 .pytest_cache/

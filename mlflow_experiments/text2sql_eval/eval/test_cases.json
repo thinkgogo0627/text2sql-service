@@ -85,7 +85,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["법인세비용", "KB금융", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": []
+    "expected_values": ["Null"]
   },
   {
     "id": "tc_009",
