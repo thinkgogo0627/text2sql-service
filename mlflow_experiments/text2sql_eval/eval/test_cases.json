@@ -8,7 +8,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["영업이익", "삼성전자", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["6566976000000"]
+    "expected_values": [6566976000000]
   },
   {
     "id": "tc_002",
@@ -19,7 +19,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["당기순이익", "SK하이닉스", "2022"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["2241669000000"]
+    "expected_values": [2241669000000]
   },
   {
     "id": "tc_003",
@@ -30,7 +30,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["매출액", "현대자동차", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["162663579000000"]
+    "expected_values": [162663579000000]
   },
   {
     "id": "tc_004",
@@ -41,7 +41,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["자산총계", "LG전자", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["60240793000000"]
+    "expected_values": [60240793000000]
   },
   {
     "id": "tc_005",
@@ -52,7 +52,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["부채총계", "카카오", "2022"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["9447826639446"]
+    "expected_values": [9447826639446]
   },
   {
     "id": "tc_006",
@@ -63,7 +63,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["자본총계", "POSCO홀딩스", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["59663897393468"]
+    "expected_values": [59663897393468]
   },
   {
     "id": "tc_007",
@@ -74,7 +74,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["현금", "셀트리온", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["564611719562"]
+    "expected_values": [564611719562]
   },
   {
     "id": "tc_008",
@@ -85,7 +85,7 @@
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["법인세비용", "KB금융", "2023"],
     "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
-    "expected_values": ["Null"]
+    "expected_values": []
   },
   {
     "id": "tc_009",
