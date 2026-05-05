@@ -2,36 +2,331 @@
   {
     "id": "tc_001",
     "user_query": "삼성전자 2023년 영업이익 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "CIS",
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["영업이익", "삼성전자", "2023"],
-    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim"
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["6566976000000"]
   },
   {
     "id": "tc_002",
-    "user_query": "현대오토에버 최근 3년 영업이익률 추이",
+    "user_query": "SK하이닉스 2022년 당기순이익 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "IS",
     "expected_tables": ["financial_fact", "company_dim"],
-    "expected_keywords": ["영업이익", "매출액", "GROUP BY"],
-    "expected_sql_pattern": "GROUP BY.*bsns_year.*ORDER BY"
+    "expected_keywords": ["당기순이익", "SK하이닉스", "2022"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["2241669000000"]
   },
   {
     "id": "tc_003",
-    "user_query": "LG전자 2022년 자기자본비율",
+    "user_query": "현대자동차 2023년 매출액 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "IS",
     "expected_tables": ["financial_fact", "company_dim"],
-    "expected_keywords": ["자기자본", "자산총계"],
-    "expected_sql_pattern": "CASE WHEN.*account_nm"
+    "expected_keywords": ["매출액", "현대자동차", "2023"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["162663579000000"]
   },
   {
     "id": "tc_004",
-    "user_query": "SK하이닉스 당기순이익이 가장 높은 연도",
+    "user_query": "LG전자 2023년 자산총계 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "BS",
     "expected_tables": ["financial_fact", "company_dim"],
-    "expected_keywords": ["당기순이익", "MAX", "ORDER BY"],
-    "expected_sql_pattern": "ORDER BY.*amount.*DESC.*LIMIT 1"
+    "expected_keywords": ["자산총계", "LG전자", "2023"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["60240793000000"]
   },
   {
     "id": "tc_005",
-    "user_query": "2023년 상장기업 영업이익 상위 5개사",
+    "user_query": "카카오 2022년 부채총계 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["부채총계", "카카오", "2022"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["9447826639446"]
+  },
+  {
+    "id": "tc_006",
+    "user_query": "POSCO홀딩스 2023년 자본총계 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["자본총계", "POSCO홀딩스", "2023"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["59663897393468"]
+  },
+  {
+    "id": "tc_007",
+    "user_query": "셀트리온 2023년 현금및현금성자산 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["현금", "셀트리온", "2023"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": ["564611719562"]
+  },
+  {
+    "id": "tc_008",
+    "user_query": "KB금융 2023년 법인세비용 알려줘",
+    "difficulty": "easy",
+    "category": "단순조회",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["법인세비용", "KB금융", "2023"],
+    "expected_sql_pattern": "SELECT.*FROM financial_fact.*JOIN company_dim",
+    "expected_values": []
+  },
+  {
+    "id": "tc_009",
+    "user_query": "삼성전자 2020~2023년 영업이익 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "CIS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "삼성전자", "2020"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_010",
+    "user_query": "현대자동차 최근 3년 매출액 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "IS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["매출액", "현대자동차"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_011",
+    "user_query": "LG화학 2021~2023년 당기순이익 변화 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "IS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["당기순이익", "LG화학"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_012",
+    "user_query": "SK하이닉스 2020~2023년 자산총계 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["자산총계", "SK하이닉스"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_013",
+    "user_query": "NAVER 최근 4년 영업비용 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "IS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업비용", "NAVER"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_014",
+    "user_query": "기아 2021~2023년 유동부채 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["유동부채", "기아"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_015",
+    "user_query": "삼성바이오로직스 2020~2023년 무형자산 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["무형자산", "삼성바이오로직스"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_016",
+    "user_query": "신한지주 2021~2023년 법인세비용 추이 알려줘",
+    "difficulty": "medium",
+    "category": "기간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["법인세비용", "신한지주"],
+    "expected_sql_pattern": "ORDER BY.*bsns_year",
+    "expected_values": []
+  },
+  {
+    "id": "tc_017",
+    "user_query": "삼성전자 2023년 영업이익률 알려줘",
+    "difficulty": "medium",
+    "category": "파생지표",
+    "sj_div": "CIS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "매출액", "삼성전자"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_018",
+    "user_query": "현대자동차 2023년 부채비율 알려줘",
+    "difficulty": "medium",
+    "category": "파생지표",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["부채총계", "자본총계", "현대자동차"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_019",
+    "user_query": "LG전자 2023년 유동비율 알려줘",
+    "difficulty": "medium",
+    "category": "파생지표",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["유동자산", "유동부채", "LG전자"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_020",
+    "user_query": "카카오 2022년 ROE 알려줘",
+    "difficulty": "medium",
+    "category": "파생지표",
+    "sj_div": "IS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["당기순이익", "자본총계", "카카오"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_021",
+    "user_query": "SK하이닉스 2023년 매출총이익률 알려줘",
+    "difficulty": "medium",
+    "category": "파생지표",
+    "sj_div": "IS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["매출총이익", "매출액", "SK하이닉스"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_022",
+    "user_query": "POSCO홀딩스 2022년 자기자본비율 알려줘",
+    "difficulty": "medium",
+    "category": "파생지표",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["자본총계", "자산총계", "POSCO"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_023",
+    "user_query": "삼성전자와 SK하이닉스 2023년 영업이익 비교해줘",
+    "difficulty": "hard",
+    "category": "기업간비교",
+    "sj_div": "CIS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "삼성전자", "SK하이닉스", "2023"],
+    "expected_sql_pattern": "WHERE.*corp_name.*IN",
+    "expected_values": []
+  },
+  {
+    "id": "tc_024",
+    "user_query": "현대자동차와 기아 2022~2023년 매출액 비교해줘",
+    "difficulty": "hard",
+    "category": "기업간비교",
+    "sj_div": "IS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["매출액", "현대자동차", "기아"],
+    "expected_sql_pattern": "WHERE.*corp_name.*IN",
+    "expected_values": []
+  },
+  {
+    "id": "tc_025",
+    "user_query": "삼성전자와 LG전자 2023년 부채비율 비교해줘",
+    "difficulty": "hard",
+    "category": "기업간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["부채총계", "자본총계", "삼성전자", "LG전자"],
+    "expected_sql_pattern": "CASE WHEN.*account_nm",
+    "expected_values": []
+  },
+  {
+    "id": "tc_026",
+    "user_query": "KB금융과 신한지주 2023년 자산총계 비교해줘",
+    "difficulty": "hard",
+    "category": "기업간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["자산총계", "KB금융", "신한지주"],
+    "expected_sql_pattern": "WHERE.*corp_name.*IN",
+    "expected_values": []
+  },
+  {
+    "id": "tc_027",
+    "user_query": "셀트리온과 삼성바이오로직스 2023년 무형자산 비교해줘",
+    "difficulty": "hard",
+    "category": "기업간비교",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["무형자산", "셀트리온", "삼성바이오로직스"],
+    "expected_sql_pattern": "WHERE.*corp_name.*IN",
+    "expected_values": []
+  },
+  {
+    "id": "tc_028",
+    "user_query": "2023년 영업이익 상위 5개사 알려줘",
+    "difficulty": "hard",
+    "category": "복합조건",
+    "sj_div": "CIS",
     "expected_tables": ["financial_fact", "company_dim"],
     "expected_keywords": ["영업이익", "ORDER BY", "LIMIT"],
-    "expected_sql_pattern": "ORDER BY.*DESC.*LIMIT 5"
+    "expected_sql_pattern": "ORDER BY.*DESC.*LIMIT 5",
+    "expected_values": []
+  },
+  {
+    "id": "tc_029",
+    "user_query": "2023년 부채비율이 가장 낮은 기업 알려줘",
+    "difficulty": "hard",
+    "category": "복합조건",
+    "sj_div": "BS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["부채총계", "자본총계", "ORDER BY"],
+    "expected_sql_pattern": "ORDER BY.*ASC.*LIMIT",
+    "expected_values": []
+  },
+  {
+    "id": "tc_030",
+    "user_query": "2022~2023년 영업이익 증가율이 가장 높은 기업 알려줘",
+    "difficulty": "hard",
+    "category": "복합조건",
+    "sj_div": "CIS",
+    "expected_tables": ["financial_fact", "company_dim"],
+    "expected_keywords": ["영업이익", "2022", "2023", "ORDER BY"],
+    "expected_sql_pattern": "ORDER BY.*DESC.*LIMIT",
+    "expected_values": []
   }
 ]
