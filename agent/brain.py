@@ -19,6 +19,22 @@ BRAIN_SQL_PROMPT = """
    WHERE c.corp_name LIKE '%삼성전자%'
    WHERE c.corp_name LIKE '%현대오토에버%'
 
+[fs_div / sj_div 규칙]
+1. fs_div: 재무제표 구분. CFS(연결) / OFS(별도). 기본값은 항상 'CFS'.
+2. sj_div: 재무제표 유형. BS(재무상태표) / IS(손익계산서) / CF(현금흐름표) / CIS(포괄손익계산서).
+3. 반드시 fs_div와 sj_div를 함께 사용할 것. fs_div에 'BS','IS' 등을 넣으면 안 됨.
+   - 자산/부채/자본/유동자산/유동부채 등 → fs_div='CFS' AND sj_div='BS'
+   - 매출액/영업이익/당기순이익 등 → fs_div='CFS' AND sj_div='IS'
+   - 현금흐름 항목 → fs_div='CFS' AND sj_div='CF'
+4. sj_div를 생략하면 중복 행이 반환될 수 있으므로, 가능하면 항상 명시할 것.
+
+[계정명(account_nm) 규칙]
+1. DB에 '당기순이익(손실)' 처럼 괄호가 포함된 계정명이 있음
+2. 따라서 계정명도 LIKE '%키워드%' 패턴 사용을 권장
+   예: account_nm LIKE '%당기순이익%' (당기순이익, 당기순이익(손실) 모두 매칭)
+3. '부채비율', 'ROE', '영업이익률' 등 파생지표는 DB에 저장되지 않음
+   → 반드시 원본 계정(부채총계/자본총계/영업이익/매출액 등)을 조회하여 계산할 것
+
 [예시 1]
 질문: 삼성전자 2023년 영업이익 알려줘
 SQL: SELECT c.corp_name, f.bsns_year, f.amount
@@ -28,6 +44,7 @@ SQL: SELECT c.corp_name, f.bsns_year, f.amount
      AND f.account_nm = '영업이익'
      AND f.bsns_year = 2023
      AND f.fs_div = 'CFS'
+     AND f.sj_div = 'IS'
 
 [예시 2]
 질문: 현대오토에버 최근 3년 영업이익률 추이
@@ -41,8 +58,22 @@ SQL: SELECT f.bsns_year,
      WHERE c.corp_name LIKE '%현대오토에버%'
      AND f.bsns_year >= 2021
      AND f.fs_div = 'CFS'
+     AND f.sj_div = 'IS'
      GROUP BY f.bsns_year
      ORDER BY f.bsns_year
+
+[예시 3]
+질문: LG전자 2023년 부채비율 알려줘
+SQL: SELECT c.corp_name, f.bsns_year,
+     ROUND(MAX(CASE WHEN f.account_nm LIKE '%부채총계%' THEN f.amount END) * 100.0
+           / NULLIF(MAX(CASE WHEN f.account_nm LIKE '%자본총계%' THEN f.amount END), 0), 2) as 부채비율
+     FROM financial_fact f
+     JOIN company_dim c ON f.corp_code = c.corp_code
+     WHERE c.corp_name LIKE '%LG전자%'
+     AND f.bsns_year = 2023
+     AND f.fs_div = 'CFS'
+     AND f.sj_div = 'BS'
+     GROUP BY c.corp_name, f.bsns_year
 
 [이전 대화]
 {chat_history}

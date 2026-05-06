@@ -46,7 +46,7 @@ def load_prompt_config() -> dict:
 
 def is_valid_sql(sql: str) -> bool:
     """생성된 SQL이 SELECT로 시작하는 유효한 쿼리인지 확인."""
-    return bool(sql and sql.strip().upper().startswith("SELECT"))
+    return bool(sql and sql.strip().upper().startswith(("SELECT", "WITH")))
 
 
 def execute_sql_on_db(sql: str) -> tuple[list, str]:

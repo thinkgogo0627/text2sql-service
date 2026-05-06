@@ -25,7 +25,7 @@ def _get_engine():
 def _is_safe_select(sql: str) -> bool:
     """SELECT 외 DDL/DML 키워드가 없는지 검사."""
     stripped = sql.strip()
-    if not stripped.upper().startswith("SELECT"):
+    if not stripped.upper().startswith(("SELECT", "WITH")):
         return False
     if BLOCKED_KEYWORDS.search(stripped):
         return False
