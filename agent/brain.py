@@ -122,6 +122,27 @@ SQL: SELECT c.corp_name, f.bsns_year,
      AND f.sj_div = 'BS'
      GROUP BY c.corp_name, f.bsns_year
 
+[예시 4]
+질문: 2022~2023년 영업이익 증가율이 가장 높은 기업 알려줘
+SQL: WITH yearly AS (
+     SELECT c.corp_name, f.bsns_year,
+            MAX(CASE WHEN f.account_nm LIKE '%영업이익%' THEN f.amount END) as amt
+     FROM financial_fact f
+     JOIN company_dim c ON f.corp_code = c.corp_code
+     WHERE f.bsns_year IN (2022, 2023)
+     AND f.fs_div = 'CFS'
+     AND f.sj_div IN ('IS','CIS')
+     GROUP BY c.corp_name, f.bsns_year
+     )
+     SELECT y23.corp_name,
+            ROUND((y23.amt - y22.amt) * 100.0 / NULLIF(ABS(y22.amt), 0), 2) as 증가율
+     FROM yearly y23
+     JOIN yearly y22 ON y23.corp_name = y22.corp_name
+     WHERE y23.bsns_year = 2023 AND y22.bsns_year = 2022
+     AND y22.amt != 0
+     ORDER BY 증가율 DESC
+     LIMIT 1
+
 [DB 기업명 매칭 결과]
 아래는 company_dim 테이블에서 조회한 실제 기업명이다.
 SQL의 WHERE절에서 corp_name 조건은 반드시 아래 이름 중 하나를 LIKE 패턴에 사용할 것.
