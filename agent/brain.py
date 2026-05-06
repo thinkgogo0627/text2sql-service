@@ -8,12 +8,23 @@ BRAIN_SQL_PROMPT = """
 [스키마]
 {schema_context}
 
+[기업명 검색 규칙]
+1. DB에 기업명이 '삼성전자(주)', 'SK하이닉스(주)' 형태로 저장됨
+2. 기업명 검색 시 반드시 LIKE '%기업명%' 패턴 사용. = 연산자 사용 금지.
+3. 단, 그룹명(삼성, SK, LG, 현대)은 절대 단독으로 LIKE 검색 금지
+   → '삼성전자'라고 하면 LIKE '%삼성전자%'
+   → '삼성바이오'라고 하면 LIKE '%삼성바이오%'
+   → '삼성'만 입력 시 corp_name도 SELECT에 포함 + LIMIT 5로 반환
+4. Few-shot 예시 WHERE절도 전부 LIKE로 수정:
+   WHERE c.corp_name LIKE '%삼성전자%'
+   WHERE c.corp_name LIKE '%현대오토에버%'
+
 [예시 1]
 질문: 삼성전자 2023년 영업이익 알려줘
 SQL: SELECT c.corp_name, f.bsns_year, f.amount
      FROM financial_fact f
      JOIN company_dim c ON f.corp_code = c.corp_code
-     WHERE c.corp_name = '삼성전자'
+     WHERE c.corp_name LIKE '%삼성전자%'
      AND f.account_nm = '영업이익'
      AND f.bsns_year = 2023
      AND f.fs_div = 'CFS'
@@ -27,7 +38,7 @@ SQL: SELECT f.bsns_year,
            / NULLIF(MAX(CASE WHEN f.account_nm = '매출액' THEN f.amount END), 0), 2) as 영업이익률
      FROM financial_fact f
      JOIN company_dim c ON f.corp_code = c.corp_code
-     WHERE c.corp_name = '현대오토에버'
+     WHERE c.corp_name LIKE '%현대오토에버%'
      AND f.bsns_year >= 2021
      AND f.fs_div = 'CFS'
      GROUP BY f.bsns_year

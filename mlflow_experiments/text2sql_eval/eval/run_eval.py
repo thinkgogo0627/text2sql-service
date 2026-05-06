@@ -31,7 +31,7 @@ from pipeline.load.postgres_loader import get_engine
 EVAL_DIR = Path(__file__).parent
 PROMPTS_DIR = EVAL_DIR.parent / "prompts"
 TEST_CASES_PATH = EVAL_DIR / "test_cases.json"
-RESULTS_PATH = EVAL_DIR / "results_v1.csv"
+RESULTS_PATH = EVAL_DIR / "results_v2.csv"
 
 
 def load_test_cases() -> list:
