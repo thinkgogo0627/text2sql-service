@@ -24,14 +24,14 @@ load_dotenv("infra/.env")
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from agent.brain import generate_sql
+from agent.brain import generate_sql, extract_company_keywords, build_company_search_sql
 from rag.embedder import search_schema
 from pipeline.load.postgres_loader import get_engine
 
 EVAL_DIR = Path(__file__).parent
 PROMPTS_DIR = EVAL_DIR.parent / "prompts"
 TEST_CASES_PATH = EVAL_DIR / "test_cases.json"
-RESULTS_PATH = EVAL_DIR / "results_v2.csv"
+RESULTS_PATH = EVAL_DIR / "results_v3.csv"
 
 
 def load_test_cases() -> list:
@@ -76,13 +76,29 @@ def value_match(result_rows: list, expected_values: list) -> bool:
     return all(v in result_values for v in expected_values)
 
 
+def resolve_company_names(user_query: str) -> str:
+    """유저 쿼리에서 기업명을 추출하고 company_dim에서 실제 이름 조회."""
+    keywords = extract_company_keywords(user_query)
+    if not keywords:
+        return ""
+    search_sql = build_company_search_sql(keywords)
+    rows, err = execute_sql_on_db(search_sql)
+    if err or not rows:
+        return "매칭 없음"
+    return ", ".join(row["corp_name"] for row in rows)
+
+
 async def run_single_case(tc: dict, schema_context: str) -> dict:
     start = time.time()
+
+    company_matches = resolve_company_names(tc["user_query"])
+
     sql = await generate_sql(
         user_query=tc["user_query"],
         schema_context=schema_context,
         chat_history=[],
         error_feedback="",
+        company_matches=company_matches,
     )
     latency_ms = int((time.time() - start) * 1000)
 

@@ -1,5 +1,50 @@
 import os
+import re
+
 from openai import AsyncOpenAI
+
+# 영문/약칭 → 한글 정식명 매핑 (LIKE 검색용)
+COMPANY_ALIASES = {
+    "SK하이닉스": "에스케이하이닉스",
+    "SK이노베이션": "에스케이이노베이션",
+    "SK텔레콤": "에스케이텔레콤",
+    "POSCO홀딩스": "포스코홀딩스",
+    "POSCO": "포스코",
+    "NAVER": "네이버",
+    "LIG넥스원": "엘아이지넥스원",
+    "신한지주": "신한금융지주",
+}
+
+_STOP_WORDS = re.compile(
+    r"(\d+[년~]?|최근|알려줘|비교해줘|추이|변화|얼마|어떻게|상위|하위|가장|높은|낮은|기업|"
+    r"영업이익률?|당기순이익|매출액|부채총계|자산총계|자본총계|부채비율|유동비율|유동자산|유동부채|"
+    r"법인세비용|매출총이익률?|매출원가|영업비용|현금및현금성자산|무형자산|유형자산|"
+    r"ROE|자기자본비율|자본금|순이익|매출|이익|비용|자산|부채|자본|비율|증가율)"
+)
+
+
+def extract_company_keywords(user_query: str) -> list[str]:
+    """유저 쿼리에서 기업명 후보 키워드를 추출하고 별칭을 추가 반환."""
+    cleaned = _STOP_WORDS.sub("", user_query)
+    cleaned = re.sub(r"[~와과의를]", " ", cleaned)
+    tokens = [t.strip() for t in cleaned.split() if len(t.strip()) >= 2]
+
+    results = []
+    for token in tokens:
+        results.append(token)
+        if token in COMPANY_ALIASES:
+            results.append(COMPANY_ALIASES[token])
+    return results
+
+
+def build_company_search_sql(keywords: list[str]) -> str:
+    """기업명 LIKE 검색 SQL 생성."""
+    if not keywords:
+        return ""
+    safe = [k.replace("'", "''") for k in keywords]
+    conds = " OR ".join(f"corp_name LIKE '%{k}%'" for k in safe)
+    return f"SELECT DISTINCT corp_name FROM company_dim WHERE {conds} LIMIT 10"
+
 
 BRAIN_SQL_PROMPT = """
 너는 DART 재무 데이터 전문 Text2SQL 모델이야.
@@ -21,12 +66,13 @@ BRAIN_SQL_PROMPT = """
 
 [fs_div / sj_div 규칙]
 1. fs_div: 재무제표 구분. CFS(연결) / OFS(별도). 기본값은 항상 'CFS'.
-2. sj_div: 재무제표 유형. BS(재무상태표) / IS(손익계산서) / CF(현금흐름표) / CIS(포괄손익계산서).
+2. sj_div: 재무제표 유형. BS(재무상태표) / IS(손익계산서) / CF(현금흐름표) / CIS(포괄손익계산서) / SCE(자본변동표).
 3. 반드시 fs_div와 sj_div를 함께 사용할 것. fs_div에 'BS','IS' 등을 넣으면 안 됨.
-   - 자산/부채/자본/유동자산/유동부채 등 → fs_div='CFS' AND sj_div='BS'
-   - 매출액/영업이익/당기순이익 등 → fs_div='CFS' AND sj_div='IS'
-   - 현금흐름 항목 → fs_div='CFS' AND sj_div='CF'
-4. sj_div를 생략하면 중복 행이 반환될 수 있으므로, 가능하면 항상 명시할 것.
+   - 자산/부채/자본/유동자산/유동부채 등 → sj_div='BS'
+   - 매출액/영업이익 → sj_div='IS'
+   - 당기순이익/법인세비용/영업비용/매출총이익 → sj_div IN ('IS','CIS') (기업마다 다름)
+   - 현금흐름 항목 → sj_div='CF'
+4. 동일 계정이 IS와 CIS 양쪽에 존재할 수 있으므로, 손익 관련 계정은 sj_div IN ('IS','CIS')로 조회하고 LIMIT 1 또는 GROUP BY로 중복을 제거할 것.
 
 [계정명(account_nm) 규칙]
 1. DB에 '당기순이익(손실)' 처럼 괄호가 포함된 계정명이 있음
@@ -44,7 +90,8 @@ SQL: SELECT c.corp_name, f.bsns_year, f.amount
      AND f.account_nm = '영업이익'
      AND f.bsns_year = 2023
      AND f.fs_div = 'CFS'
-     AND f.sj_div = 'IS'
+     AND f.sj_div IN ('IS','CIS')
+     LIMIT 1
 
 [예시 2]
 질문: 현대오토에버 최근 3년 영업이익률 추이
@@ -58,7 +105,7 @@ SQL: SELECT f.bsns_year,
      WHERE c.corp_name LIKE '%현대오토에버%'
      AND f.bsns_year >= 2021
      AND f.fs_div = 'CFS'
-     AND f.sj_div = 'IS'
+     AND f.sj_div IN ('IS','CIS')
      GROUP BY f.bsns_year
      ORDER BY f.bsns_year
 
@@ -74,6 +121,12 @@ SQL: SELECT c.corp_name, f.bsns_year,
      AND f.fs_div = 'CFS'
      AND f.sj_div = 'BS'
      GROUP BY c.corp_name, f.bsns_year
+
+[DB 기업명 매칭 결과]
+아래는 company_dim 테이블에서 조회한 실제 기업명이다.
+SQL의 WHERE절에서 corp_name 조건은 반드시 아래 이름 중 하나를 LIKE 패턴에 사용할 것.
+사용자가 입력한 이름이 아닌, 아래 DB 실제 이름을 사용해야 한다.
+{company_matches}
 
 [이전 대화]
 {chat_history}
@@ -120,6 +173,7 @@ async def generate_sql(
     schema_context: str,
     chat_history: list,
     error_feedback: str = "",
+    company_matches: str = "",
 ) -> str:
     """
     Qwen 72B를 사용하여 SQL을 생성한다.
@@ -137,6 +191,7 @@ async def generate_sql(
 
     prompt = BRAIN_SQL_PROMPT.format(
         schema_context=schema_context,
+        company_matches=company_matches or "없음",
         chat_history=chat_str or "없음",
         error_feedback=error_feedback or "없음",
         user_query=user_query,

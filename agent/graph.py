@@ -5,7 +5,12 @@ from typing import TypedDict, Annotated
 import httpx
 from langgraph.graph import StateGraph, END
 
-from agent.brain import generate_sql, write_report
+from agent.brain import (
+    generate_sql,
+    write_report,
+    extract_company_keywords,
+    build_company_search_sql,
+)
 
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8001")
 MAX_RETRY = 3
@@ -16,6 +21,7 @@ class AgentState(TypedDict):
     chat_history: Annotated[list, operator.add]   # 세션 누적
     schema_context: str        # RAG 결과 캐싱 — 동일 테이블 재질문 시 재검색 스킵
     cached_schema_key: str     # 마지막으로 검색한 스키마 키
+    company_matches: str             # resolve_company 결과
     generated_sql: str
     query_result: list
     final_report: str
@@ -50,6 +56,24 @@ async def retrieve_schema(state: AgentState) -> AgentState:
     }
 
 
+async def resolve_company_node(state: AgentState) -> AgentState:
+    """유저 쿼리에서 기업명을 추출하고 company_dim에서 실제 이름 조회."""
+    keywords = extract_company_keywords(state["user_query"])
+    if not keywords:
+        return {**state, "company_matches": ""}
+
+    sql = build_company_search_sql(keywords)
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            f"{MCP_BASE_URL}/tools/sql",
+            json={"sql_query": sql},
+        )
+        result = resp.json()
+
+    matches = [row["corp_name"] for row in result.get("data", [])]
+    return {**state, "company_matches": ", ".join(matches) if matches else "매칭 없음"}
+
+
 async def generate_sql_node(state: AgentState) -> AgentState:
     """Brain(Qwen 72B)에게 Few-shot 프롬프트로 SQL 생성 요청."""
     error_feedback = state.get("error", "")
@@ -58,6 +82,7 @@ async def generate_sql_node(state: AgentState) -> AgentState:
         schema_context=state["schema_context"],
         chat_history=state["chat_history"],
         error_feedback=error_feedback,
+        company_matches=state.get("company_matches", ""),
     )
     return {**state, "generated_sql": sql, "error": ""}
 
@@ -165,6 +190,7 @@ def build_graph() -> StateGraph:
     graph = StateGraph(AgentState)
 
     graph.add_node("retrieve_schema", retrieve_schema)
+    graph.add_node("resolve_company", resolve_company_node)
     graph.add_node("generate_sql", generate_sql_node)
     graph.add_node("execute_sql", execute_sql_node)
     graph.add_node("check_data", check_data_node)
@@ -173,7 +199,8 @@ def build_graph() -> StateGraph:
     graph.add_node("end_with_error", end_with_error_node)
 
     graph.set_entry_point("retrieve_schema")
-    graph.add_edge("retrieve_schema", "generate_sql")
+    graph.add_edge("retrieve_schema", "resolve_company")
+    graph.add_edge("resolve_company", "generate_sql")
     graph.add_edge("generate_sql", "execute_sql")
 
     graph.add_conditional_edges(
@@ -226,6 +253,7 @@ async def run_agent(user_query: str, chat_history: list = None) -> dict:
         "chat_history": chat_history or [],
         "schema_context": "",
         "cached_schema_key": "",
+        "company_matches": "",
         "generated_sql": "",
         "query_result": [],
         "final_report": "",
