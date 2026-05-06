@@ -21,11 +21,11 @@ def _get_chroma_client() -> chromadb.HttpClient:
 
 
 def _load_doc_model() -> SentenceTransformer:
-    return SentenceTransformer(DOC_MODEL_NAME)
+    return SentenceTransformer(DOC_MODEL_NAME, trust_remote_code=True)
 
 
 def _load_query_model() -> SentenceTransformer:
-    return SentenceTransformer(QUERY_MODEL_NAME)
+    return SentenceTransformer(QUERY_MODEL_NAME, trust_remote_code=True)
 
 
 def embed_schema_metadata():
@@ -100,3 +100,7 @@ def search_schema(keyword: str, top_k: int = 3) -> str:
 
     docs = results.get("documents", [[]])[0]
     return "\n\n---\n\n".join(docs)
+
+
+if __name__ == "__main__":
+    embed_schema_metadata()

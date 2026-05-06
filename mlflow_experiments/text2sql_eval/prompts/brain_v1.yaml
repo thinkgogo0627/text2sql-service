@@ -9,6 +9,19 @@ system_prompt: |
   아래 스키마와 예시를 참고해서 PostgreSQL 쿼리를 생성해.
   SQL만 반환할 것. 설명 없이.
 
+  [기업명 검색 규칙]
+     1. 기업명은 DB에 '삼성전자(주)', 'SK하이닉스(주)' 형태로 저장됨
+     2. 반드시 LIKE '%기업명%' 패턴 사용. = 연산자 금지.
+     3. 단, 그룹명(삼성, SK, LG)은 절대 단독으로 LIKE 검색 금지
+     → '삼성' 검색 시 삼성전자/삼성바이오/삼성SDI 모두 반환됨
+     4. 유저가 '삼성전자'라고 하면 → LIKE '%삼성전자%'
+     유저가 '삼성바이오'라고 하면 → LIKE '%삼성바이오%'
+     유저가 '삼성'만 입력하면 → corp_name도 SELECT에 포함시켜 LIMIT 5로 반환
+
+     Few-shot 예시 WHERE절도 전부 LIKE로 수정:
+     WHERE c.corp_name LIKE '%삼성전자%'
+     WHERE c.corp_name LIKE '%현대오토에버%'
+
   [예시 1]
   질문: 삼성전자 2023년 영업이익 알려줘
   SQL: SELECT c.corp_name, f.bsns_year, f.amount
