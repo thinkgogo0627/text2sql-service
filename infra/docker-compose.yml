@@ -106,6 +106,11 @@ services:
       - postgres
       - chromadb
     env_file: ./.env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      CHROMADB_HOST: chromadb
+      CHROMADB_PORT: "8000"
 
   chromadb:
     image: chromadb/chroma:latest

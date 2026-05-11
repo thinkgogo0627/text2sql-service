@@ -1,9 +1,13 @@
 import os
+import logging
 import operator
 from typing import TypedDict, Annotated
 
 import httpx
 from langgraph.graph import StateGraph, END
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 from agent.brain import (
     generate_sql,
@@ -84,6 +88,7 @@ async def generate_sql_node(state: AgentState) -> AgentState:
         error_feedback=error_feedback,
         company_matches=state.get("company_matches", ""),
     )
+    logger.info(f"[generate_sql] generated SQL:\n{sql}")
     return {**state, "generated_sql": sql, "error": ""}
 
 
@@ -96,7 +101,12 @@ async def execute_sql_node(state: AgentState) -> AgentState:
         )
         result = resp.json()
 
+    logger.info(f"[execute_sql] response status: {result.get('status')}")
+    logger.info(f"[execute_sql] row_count: {result.get('row_count')}")
+    logger.info(f"[execute_sql] data (first 2): {result.get('data', [])[:2]}")
+
     if result.get("status") == "error":
+        logger.warning(f"[execute_sql] ERROR: {result.get('error_type')}: {result.get('error_message')}")
         return {
             **state,
             "error": f"{result.get('error_type')}: {result.get('error_message')}",
@@ -164,15 +174,19 @@ async def write_report_node(state: AgentState) -> AgentState:
 def _route_after_sql(state: AgentState) -> str:
     """execute_sql 후 라우팅."""
     if state.get("error"):
+        logger.warning(f"[route_after_sql] retry_count={state.get('retry_count', 0)}, error={state['error']}")
         if state.get("retry_count", 0) < MAX_RETRY:
             return "generate_sql"
         return "end_with_error"
+    logger.info("[route_after_sql] -> check_data")
     return "check_data"
 
 
 def _route_after_check(state: AgentState) -> str:
     """check_data 후 라우팅."""
-    if not state.get("query_result"):
+    has_data = bool(state.get("query_result"))
+    logger.info(f"[route_after_check] has_data={has_data}, len={len(state.get('query_result', []))}")
+    if not has_data:
         return "run_scraper"
     return "write_report"
 
