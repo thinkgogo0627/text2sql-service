@@ -81,6 +81,12 @@ BRAIN_SQL_PROMPT = """
 3. '부채비율', 'ROE', '영업이익률' 등 파생지표는 DB에 저장되지 않음
    → 반드시 원본 계정(부채총계/자본총계/영업이익/매출액 등)을 조회하여 계산할 것
 
+[event_logs_fact 규칙]
+1. 공시·뉴스 로그 테이블. report_nm(공시명), summary(3줄 요약), sentiment_score(-1~1)
+2. '공시', '뉴스', '요약', '감성', '센티먼트' 키워드 → event_logs_fact 사용
+3. 기간 필터는 rcept_dt(DATE) 사용. bsns_year 컬럼은 없음.
+4. sentiment_score는 NULL일 수 있으므로 정렬·평균 시 IS NOT NULL 조건 필수
+
 [예시 1]
 질문: 삼성전자 2023년 영업이익 알려줘
 SQL: SELECT c.corp_name, f.bsns_year, f.amount
@@ -142,6 +148,37 @@ SQL: WITH yearly AS (
      AND y22.amt != 0
      ORDER BY 증가율 DESC
      LIMIT 1
+
+[예시 5]
+질문: 삼성전자 최근 공시 5건 요약 알려줘
+SQL: SELECT c.corp_name, e.rcept_dt, e.report_nm, e.summary
+     FROM event_logs_fact e
+     JOIN company_dim c ON e.corp_code = c.corp_code
+     WHERE c.corp_name LIKE '%삼성전자%'
+     ORDER BY e.rcept_dt DESC
+     LIMIT 5
+
+[예시 6]
+질문: 2024년 가장 부정적인 공시 상위 5건 보여줘
+SQL: SELECT c.corp_name, e.rcept_dt, e.report_nm, e.sentiment_score, e.summary
+     FROM event_logs_fact e
+     JOIN company_dim c ON e.corp_code = c.corp_code
+     WHERE e.rcept_dt >= '2024-01-01' AND e.rcept_dt < '2025-01-01'
+     AND e.sentiment_score IS NOT NULL
+     ORDER BY e.sentiment_score ASC
+     LIMIT 5
+
+[예시 7]
+질문: SK하이닉스 2024년 공시 평균 감성점수 알려줘
+SQL: SELECT c.corp_name,
+     ROUND(AVG(e.sentiment_score)::numeric, 3) AS 평균감성점수,
+     COUNT(*) AS 공시건수
+     FROM event_logs_fact e
+     JOIN company_dim c ON e.corp_code = c.corp_code
+     WHERE c.corp_name LIKE '%에스케이하이닉스%'
+     AND e.rcept_dt >= '2024-01-01' AND e.rcept_dt < '2025-01-01'
+     AND e.sentiment_score IS NOT NULL
+     GROUP BY c.corp_name
 
 [DB 기업명 매칭 결과]
 아래는 company_dim 테이블에서 조회한 실제 기업명이다.
