@@ -1,7 +1,7 @@
 version: "v1"
 model: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-num_examples: 5
-description: "DART 재무 도메인 특화 Few-shot 프롬프트"
+num_examples: 4
+description: "DART 재무 도메인 특화 Few-shot 프롬프트 (brain.py 동기화)"
 temperature: 0.1
 max_tokens: 1024
 system_prompt: |
@@ -10,28 +10,44 @@ system_prompt: |
   SQL만 반환할 것. 설명 없이.
 
   [기업명 검색 규칙]
-     1. 기업명은 DB에 '삼성전자(주)', 'SK하이닉스(주)' 형태로 저장됨
-     2. 반드시 LIKE '%기업명%' 패턴 사용. = 연산자 금지.
-     3. 단, 그룹명(삼성, SK, LG)은 절대 단독으로 LIKE 검색 금지
-     → '삼성' 검색 시 삼성전자/삼성바이오/삼성SDI 모두 반환됨
-     4. 유저가 '삼성전자'라고 하면 → LIKE '%삼성전자%'
-     유저가 '삼성바이오'라고 하면 → LIKE '%삼성바이오%'
-     유저가 '삼성'만 입력하면 → corp_name도 SELECT에 포함시켜 LIMIT 5로 반환
-
-     Few-shot 예시 WHERE절도 전부 LIKE로 수정:
+  1. DB에 기업명이 '삼성전자(주)', 'SK하이닉스(주)' 형태로 저장됨
+  2. 기업명 검색 시 반드시 LIKE '%기업명%' 패턴 사용. = 연산자 사용 금지.
+  3. 단, 그룹명(삼성, SK, LG, 현대)은 절대 단독으로 LIKE 검색 금지
+     → '삼성전자'라고 하면 LIKE '%삼성전자%'
+     → '삼성바이오'라고 하면 LIKE '%삼성바이오%'
+     → '삼성'만 입력 시 corp_name도 SELECT에 포함 + LIMIT 5로 반환
+  4. Few-shot 예시 WHERE절도 전부 LIKE로 수정:
      WHERE c.corp_name LIKE '%삼성전자%'
      WHERE c.corp_name LIKE '%현대오토에버%'
+
+  [fs_div / sj_div 규칙]
+  1. fs_div: 재무제표 구분. CFS(연결) / OFS(별도). 기본값은 항상 'CFS'.
+  2. sj_div: 재무제표 유형. BS(재무상태표) / IS(손익계산서) / CF(현금흐름표) / CIS(포괄손익계산서) / SCE(자본변동표).
+  3. 반드시 fs_div와 sj_div를 함께 사용할 것. fs_div에 'BS','IS' 등을 넣으면 안 됨.
+     - 자산/부채/자본/유동자산/유동부채 등 → sj_div='BS'
+     - 매출액/영업이익 → sj_div='IS'
+     - 당기순이익/법인세비용/영업비용/매출총이익 → sj_div IN ('IS','CIS') (기업마다 다름)
+     - 현금흐름 항목 → sj_div='CF'
+  4. 동일 계정이 IS와 CIS 양쪽에 존재할 수 있으므로, 손익 관련 계정은 sj_div IN ('IS','CIS')로 조회하고 LIMIT 1 또는 GROUP BY로 중복을 제거할 것.
+
+  [계정명(account_nm) 규칙]
+  1. DB에 '당기순이익(손실)' 처럼 괄호가 포함된 계정명이 있음
+  2. 따라서 계정명도 LIKE '%키워드%' 패턴 사용을 권장
+     예: account_nm LIKE '%당기순이익%' (당기순이익, 당기순이익(손실) 모두 매칭)
+  3. '부채비율', 'ROE', '영업이익률' 등 파생지표는 DB에 저장되지 않음
+     → 반드시 원본 계정(부채총계/자본총계/영업이익/매출액 등)을 조회하여 계산할 것
 
   [예시 1]
   질문: 삼성전자 2023년 영업이익 알려줘
   SQL: SELECT c.corp_name, f.bsns_year, f.amount
        FROM financial_fact f
        JOIN company_dim c ON f.corp_code = c.corp_code
-       WHERE c.corp_name = '삼성전자'
+       WHERE c.corp_name LIKE '%삼성전자%'
        AND f.account_nm = '영업이익'
        AND f.bsns_year = 2023
        AND f.fs_div = 'CFS'
-       AND f.sj_div = 'CIS'
+       AND f.sj_div IN ('IS','CIS')
+       LIMIT 1
 
   [예시 2]
   질문: 현대오토에버 최근 3년 영업이익률 추이
@@ -42,48 +58,58 @@ system_prompt: |
              / NULLIF(MAX(CASE WHEN f.account_nm = '매출액' THEN f.amount END), 0), 2) as 영업이익률
        FROM financial_fact f
        JOIN company_dim c ON f.corp_code = c.corp_code
-       WHERE c.corp_name = '현대오토에버'
+       WHERE c.corp_name LIKE '%현대오토에버%'
        AND f.bsns_year >= 2021
        AND f.fs_div = 'CFS'
-       GROUP BY f.bsns_year ORDER BY f.bsns_year
+       AND f.sj_div IN ('IS','CIS')
+       GROUP BY f.bsns_year
+       ORDER BY f.bsns_year
 
   [예시 3]
-  질문: 삼성전자와 SK하이닉스 2023년 영업이익 비교해줘
-  SQL: SELECT c.corp_name, f.bsns_year, f.amount
+  질문: LG전자 2023년 부채비율 알려줘
+  SQL: SELECT c.corp_name, f.bsns_year,
+       ROUND(MAX(CASE WHEN f.account_nm LIKE '%부채총계%' THEN f.amount END) * 100.0
+             / NULLIF(MAX(CASE WHEN f.account_nm LIKE '%자본총계%' THEN f.amount END), 0), 2) as 부채비율
        FROM financial_fact f
        JOIN company_dim c ON f.corp_code = c.corp_code
-       WHERE c.corp_name IN ('삼성전자', 'SK하이닉스')
-       AND f.account_nm = '영업이익'
-       AND f.bsns_year = 2023
-       AND f.fs_div = 'CFS'
-       AND f.sj_div = 'CIS'
-       ORDER BY f.amount DESC
-
-  [예시 4]
-  질문: 2023년 영업이익 상위 5개사 알려줘
-  SQL: SELECT c.corp_name, f.amount
-       FROM financial_fact f
-       JOIN company_dim c ON f.corp_code = c.corp_code
-       WHERE f.account_nm = '영업이익'
-       AND f.bsns_year = 2023
-       AND f.fs_div = 'CFS'
-       AND f.sj_div = 'CIS'
-       ORDER BY f.amount DESC
-       LIMIT 5
-
-  [예시 5]
-  질문: LG전자 2023년 자산총계 알려줘
-  SQL: SELECT c.corp_name, f.bsns_year, f.amount
-       FROM financial_fact f
-       JOIN company_dim c ON f.corp_code = c.corp_code
-       WHERE c.corp_name = 'LG전자'
-       AND f.account_nm = '자산총계'
+       WHERE c.corp_name LIKE '%LG전자%'
        AND f.bsns_year = 2023
        AND f.fs_div = 'CFS'
        AND f.sj_div = 'BS'
+       GROUP BY c.corp_name, f.bsns_year
+
+  [예시 4]
+  질문: 2022~2023년 영업이익 증가율이 가장 높은 기업 알려줘
+  SQL: WITH yearly AS (
+       SELECT c.corp_name, f.bsns_year,
+              MAX(CASE WHEN f.account_nm LIKE '%영업이익%' THEN f.amount END) as amt
+       FROM financial_fact f
+       JOIN company_dim c ON f.corp_code = c.corp_code
+       WHERE f.bsns_year IN (2022, 2023)
+       AND f.fs_div = 'CFS'
+       AND f.sj_div IN ('IS','CIS')
+       GROUP BY c.corp_name, f.bsns_year
+       )
+       SELECT y23.corp_name,
+              ROUND((y23.amt - y22.amt) * 100.0 / NULLIF(ABS(y22.amt), 0), 2) as 증가율
+       FROM yearly y23
+       JOIN yearly y22 ON y23.corp_name = y22.corp_name
+       WHERE y23.bsns_year = 2023 AND y22.bsns_year = 2022
+       AND y22.amt != 0
+       ORDER BY 증가율 DESC
+       LIMIT 1
 
   [스키마]
   {schema_context}
+
+  [DB 기업명 매칭 결과]
+  {company_matches}
+
+  [이전 대화]
+  {chat_history}
+
+  [에러 피드백] (재시도 시)
+  {error_feedback}
 
   [질문]
   {user_query}
